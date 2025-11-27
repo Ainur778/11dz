@@ -1,0 +1,77 @@
+// User.java (абстрактный)
+import java.util.UUID;
+public abstract class User {
+    protected UUID id;
+    protected String name;
+    protected String email;
+    protected String phone;
+    protected String address;
+    public User(String name, String email) {
+        this.id = UUID.randomUUID();
+        this.name = name; this.email = email;
+    }
+    public abstract void register();
+    public boolean login(String email, String password) { /* проверка */ return true; }
+    public void updateProfile(String name, String phone, String address) { /* ... */ }
+}
+
+// Client.java
+import java.util.ArrayList;
+import java.util.List;
+public class Client extends User {
+    private LoyaltyAccount loyalty = new LoyaltyAccount();
+    private List<Order> orders = new ArrayList<>();
+    public Client(String name, String email){ super(name,email); }
+    @Override public void register(){ /* ... */ }
+    public void addToCart(Cart cart, Product p, int qty){ cart.addItem(p, qty); }
+    public Order checkout(Cart cart){ /* create order */ return null; }
+}
+
+// Product.java
+import java.math.BigDecimal;
+import java.util.Map;
+public class Product {
+    private String id;
+    private String name;
+    private String description;
+    private BigDecimal price;
+    private Map<String, Integer> inventoryByWarehouse; // warehouseId -> qty
+
+    public Product(String id, String name, BigDecimal price){
+        this.id = id; this.name = name; this.price = price;
+    }
+    public void applyDiscount(BigDecimal percent){
+        price = price.subtract(price.multiply(percent).divide(new BigDecimal("100")));
+    }
+}
+
+// Factory для продуктов
+public interface ProductFactory {
+    Product create(String type, String id, String name, BigDecimal price);
+}
+
+public class SimpleProductFactory implements ProductFactory {
+    @Override
+    public Product create(String type, String id, String name, BigDecimal price){
+        // расширяемо: type = "physical", "digital", "service"
+        switch(type.toLowerCase()){
+            case "digital":
+                return new DigitalProduct(id,name,price);
+            case "service":
+                return new ServiceProduct(id,name,price);
+            default:
+                return new Product(id,name,price);
+        }
+    }
+}
+
+// Примеры расширений
+public class DigitalProduct extends Product {
+    public DigitalProduct(String id, String name, BigDecimal price){ super(id,name,price); }
+    public void deliverLicense(String email){ /* ... */ }
+}
+
+public class ServiceProduct extends Product {
+    public ServiceProduct(String id, String name, BigDecimal price){ super(id,name,price); }
+    public void scheduleService(String when) { /* ... */ }
+}
